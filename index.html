@@ -473,13 +473,21 @@
       width: 100%;
       aspect-ratio: 16 / 6;
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 600;
-      font-size: 16px;
-      margin-bottom: 16px;
+      position: relative;
+      overflow: visible;
+      margin-bottom: calc(22.5% + 16px);
+    }
+    .sheet-banner-img img {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 160%;
+      width: auto;
+      max-width: none;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 1;
     }
     .sheet-title {
       font-size: 22px;
@@ -492,6 +500,12 @@
       color: #3c3c43;
       line-height: 1.45;
       margin: 0 0 16px;
+    }
+    .sheet-text p {
+      margin: 0 0 10px;
+    }
+    .sheet-text p:last-child {
+      margin-bottom: 0;
     }
     .sheet-bullets {
       list-style: none;
@@ -757,14 +771,11 @@
       <div class="sheet-modal" id="sheetModal">
         <div class="sheet-grabber" id="sheetGrabber"></div>
         <div class="sheet-body">
-          <div class="sheet-banner-img" id="sheetBanner">Баннер</div>
+          <div class="sheet-banner-img" id="sheetBanner">
+            <img id="sheetBannerImage" src="1.png" alt="Баннер">
+          </div>
           <h2 class="sheet-title" id="sheetTitle">Заголовок акции</h2>
-          <p class="sheet-text" id="sheetText">Узнайте подробности специального предложения и воспользуйтесь выгодными условиями уже сейчас.</p>
-          <ul class="sheet-bullets">
-            <li>Бесплатный пробный период 14 дней</li>
-            <li>Облачное хранилище видео без ограничений</li>
-            <li>Умные уведомления о движении 24/7</li>
-          </ul>
+          <div class="sheet-text" id="sheetText">Узнайте подробности специального предложения и воспользуйтесь выгодными условиями уже сейчас.</div>
         </div>
         <div class="sheet-footer">
           <button class="sheet-cta" id="sheetCta">Подробнее</button>
@@ -968,21 +979,76 @@
       var sheetOverlay = document.getElementById('sheetOverlay');
       var sheetModal   = document.getElementById('sheetModal');
       var sheetBanner  = document.getElementById('sheetBanner');
+      var sheetBannerImage = document.getElementById('sheetBannerImage');
       var sheetGrabber = document.getElementById('sheetGrabber');
       var sheetOpen    = false;
 
       var bannerData = [
-        { fullTitle: 'Облачное видеонаблюдение для дома и офиса', fullText: 'Подключите камеры к облаку Ivideon и смотрите видео в реальном времени из любой точки мира.\n\n• Бесплатный пробный период 14 дней\n• Облачное хранилище видео без ограничений\n• Умные уведомления о движении 24/7', ctaLabel: 'Подключить камеры' },
-        { fullTitle: 'Умные уведомления о событиях', fullText: 'Настраивайте уведомления под себя: движение, звук, расписание.\n\n• Мгновенные push-уведомления на телефон\n• Распознавание лиц и зоны интереса\n• Интеграция с умным домом', ctaLabel: 'Настроить уведомления' },
-        { fullTitle: 'Специальное предложение: −30% на год подписки', fullText: 'Оплатите год подписки и получите скидку 30%. Без скрытых платежей.\n\n• До 30 камер в одном аккаунте\n• Архив до 30 дней в облаке\n• Техподдержка 24/7', ctaLabel: 'Оформить подписку' }
+        { image: '1.png', fullTitle: 'Облачное видеонаблюдение для дома и офиса', fullText: 'Подключите камеры к облаку Ivideon и смотрите видео **в реальном времени** из любой точки мира.\n\n- Бесплатный пробный период 14 дней\n- Облачное хранилище видео без ограничений\n- Умные уведомления о движении 24/7', ctaLabel: 'Подключить камеры' },
+        { image: '2.png', fullTitle: 'Умные уведомления о событиях', fullText: 'Настраивайте уведомления под себя: движение, звук, расписание.\n\n- Мгновенные push-уведомления на телефон\n- Распознавание лиц и зоны интереса\n- Интеграция с умным домом', ctaLabel: 'Настроить уведомления' },
+        { image: '3.png', fullTitle: 'Специальное предложение: −30% на год подписки', fullText: 'Оплатите год подписки и получите **скидку 30%**. Без скрытых платежей.\n\n- До 30 камер в одном аккаунте\n- Архив до 30 дней в облаке\n- Техподдержка 24/7', ctaLabel: 'Оформить подписку' }
       ];
+
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderInlineMarkdown(text) {
+        return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      }
+
+      function renderMarkdown(md) {
+        var lines = md.split('\n');
+        var html = '';
+        var listOpen = false;
+
+        lines.forEach(function(line) {
+          var trimmed = line.trim();
+
+          if (!trimmed) {
+            if (listOpen) {
+              html += '</ul>';
+              listOpen = false;
+            }
+            return;
+          }
+
+          if (trimmed.indexOf('- ') === 0) {
+            if (!listOpen) {
+              html += '<ul class="sheet-bullets">';
+              listOpen = true;
+            }
+            html += '<li>' + renderInlineMarkdown(trimmed.slice(2).trim()) + '</li>';
+            return;
+          }
+
+          if (listOpen) {
+            html += '</ul>';
+            listOpen = false;
+          }
+
+          html += '<p>' + renderInlineMarkdown(trimmed) + '</p>';
+        });
+
+        if (listOpen) {
+          html += '</ul>';
+        }
+
+        return html;
+      }
 
       function openSheet(slideIndex, bg) {
         var data = bannerData[slideIndex] || bannerData[0];
         sheetBanner.style.background = bg;
-        sheetBanner.textContent = '';
+        sheetBannerImage.src = data.image;
+        sheetBannerImage.alt = data.fullTitle;
         document.getElementById('sheetTitle').textContent = data.fullTitle;
-        document.getElementById('sheetText').textContent = data.fullText;
+        document.getElementById('sheetText').innerHTML = renderMarkdown(data.fullText);
         document.getElementById('sheetCta').textContent = data.ctaLabel;
         sheetOverlay.classList.add('open');
         sheetModal.classList.add('open');
