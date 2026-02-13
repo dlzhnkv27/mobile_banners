@@ -258,6 +258,8 @@
       align-items: center;
       gap: 12px;
       width: 100%;
+      padding-right: 16px;
+      box-sizing: border-box;
       min-width: 0;
     }
     .banner-slide .banner-img {
@@ -275,10 +277,13 @@
     }
     .banner-slide .banner-preview {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       min-width: 0;
     }
     .banner-slide .banner-preview-title {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       color: #1c1c1e;
       margin: 0 0 4px;
@@ -289,6 +294,12 @@
       color: #3c3c43;
       line-height: 1.35;
       margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      line-clamp: 3;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
     }
     .banner-slide:nth-child(1) { background: linear-gradient(to bottom, #E2FFF3 0%, rgba(226, 255, 243, 0.3) 100%); color: #333; }
     .banner-slide:nth-child(2) { background: linear-gradient(to bottom, #E2EDFF 0%, rgba(226, 237, 255, 0.3) 100%); color: #333; }
