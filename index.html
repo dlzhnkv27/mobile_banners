@@ -121,7 +121,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      padding: 0 12px;
+      padding: 0;
     }
     .app-navbar .title {
       font-size: 17px;
@@ -242,23 +242,59 @@
       transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
     .banner-slide {
-      /* ширина = ширина экрана − 24px слева − 24px справа */
       flex: 0 0 calc(var(--iphone-width) - 16px - 48px);
       width: calc(var(--iphone-width) - 16px - 48px);
-      /* высота по пропорции 16:9 от ширины баннера */
-      height: calc((var(--iphone-width) - 16px - 48px) * 9 / 16);
+      height: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
       border-radius: 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 600;
-      font-size: 16px;
+      padding: 0;
+      box-sizing: border-box;
       background: #ccc;
+      overflow: hidden;
     }
-    .banner-slide:nth-child(3n+1) { background: linear-gradient(135deg, #007aff, #5856d6); }
-    .banner-slide:nth-child(3n+2) { background: linear-gradient(135deg, #34c759, #30d158); }
-    .banner-slide:nth-child(3n+3) { background: linear-gradient(135deg, #ff9500, #ff9f0a); }
+    .banner-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
+    }
+    .banner-slide .banner-img {
+      flex-shrink: 0;
+      width: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
+      height: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
+      border-radius: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+    .banner-slide .banner-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .banner-slide .banner-preview {
+      flex: 1;
+      min-width: 0;
+    }
+    .banner-slide .banner-preview-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1c1c1e;
+      margin: 0 0 4px;
+      line-height: 1.25;
+    }
+    .banner-slide .banner-preview-text {
+      font-size: 13px;
+      color: #3c3c43;
+      line-height: 1.35;
+      margin: 0;
+    }
+    .banner-slide:nth-child(1) { background: linear-gradient(to bottom, #E2FFF3 0%, rgba(226, 255, 243, 0.3) 100%); color: #333; }
+    .banner-slide:nth-child(2) { background: linear-gradient(to bottom, #E2EDFF 0%, rgba(226, 237, 255, 0.3) 100%); color: #333; }
+    .banner-slide:nth-child(3) { background: linear-gradient(to bottom, #EDE2FF 0%, rgba(237, 226, 255, 0.3) 100%); color: #333; }
+    .banner-slide:nth-child(4) { background: linear-gradient(to bottom, #E2FFF3 0%, rgba(226, 255, 243, 0.3) 100%); color: #333; }
+    .banner-slide:nth-child(5) { background: linear-gradient(to bottom, #E2EDFF 0%, rgba(226, 237, 255, 0.3) 100%); color: #333; }
     .carousel-dots {
       display: flex;
       justify-content: center;
@@ -424,7 +460,7 @@
     }
     .sheet-banner-img {
       width: 100%;
-      aspect-ratio: 16 / 9;
+      aspect-ratio: 16 / 6;
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -527,7 +563,11 @@
       .banner-slide {
         flex: 0 0 calc(100vw - 48px);
         width: calc(100vw - 48px);
-        height: calc((100vw - 48px) * 9 / 16);
+        height: calc((100vw - 48px) * 6 / 16);
+      }
+      .banner-slide .banner-img {
+        width: calc((100vw - 48px) * 6 / 16);
+        height: calc((100vw - 48px) * 6 / 16);
       }
     }
   </style>
@@ -565,9 +605,33 @@
 
         <section class="banners-section" id="bannersSection">
           <div class="banners-track" id="bannersTrack">
-            <div class="banner-slide">Баннер 1</div>
-            <div class="banner-slide">Баннер 2</div>
-            <div class="banner-slide">Баннер 3</div>
+            <div class="banner-slide">
+              <div class="banner-inner">
+                <div class="banner-img"><img src="1.png" alt="Облачное видеонаблюдение"></div>
+                <div class="banner-preview">
+                  <h3 class="banner-preview-title">Облачное видеонаблюдение</h3>
+                  <p class="banner-preview-text">Подключите камеры к облаку и смотрите видео из любой точки мира.</p>
+                </div>
+              </div>
+            </div>
+            <div class="banner-slide">
+              <div class="banner-inner">
+                <div class="banner-img"><img src="2.png" alt="Умные уведомления"></div>
+                <div class="banner-preview">
+                  <h3 class="banner-preview-title">Умные уведомления</h3>
+                  <p class="banner-preview-text">Получайте мгновенные уведомления при обнаружении движения или звука.</p>
+                </div>
+              </div>
+            </div>
+            <div class="banner-slide">
+              <div class="banner-inner">
+                <div class="banner-img"><img src="3.png" alt="Скидка 30% на годовой план"></div>
+                <div class="banner-preview">
+                  <h3 class="banner-preview-title">Скидка 30% на годовой план</h3>
+                  <p class="banner-preview-text">Оформите подписку на год и сэкономьте — предложение ограничено.</p>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="carousel-dots" id="carouselDots">
             <span class="carousel-dot active"></span>
@@ -579,7 +643,7 @@
         <div class="cameras-list">
 
         <div class="camera-item">
-          <div class="camera-preview"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=320&h=180&fit=crop" alt="Входная дверь"></div>
+          <div class="camera-preview"><img src="https://loremflickr.com/320/180/front-door?lock=17" alt="Входная дверь"></div>
           <div class="camera-info">
             <div class="camera-name">Входная дверь</div>
             <div class="camera-status">Live</div>
@@ -897,17 +961,18 @@
       var sheetOpen    = false;
 
       var bannerData = [
-        { title: 'Облачное видеонаблюдение', text: 'Подключите камеры к облаку и смотрите видео из любой точки мира в реальном времени.' },
-        { title: 'Умные уведомления', text: 'Получайте мгновенные уведомления при обнаружении движения или звука.' },
-        { title: 'Скидка 30% на годовой план', text: 'Оформите подписку на год и сэкономьте — предложение ограничено.' }
+        { fullTitle: 'Облачное видеонаблюдение для дома и офиса', fullText: 'Подключите камеры к облаку Ivideon и смотрите видео в реальном времени из любой точки мира.\n\n• Бесплатный пробный период 14 дней\n• Облачное хранилище видео без ограничений\n• Умные уведомления о движении 24/7', ctaLabel: 'Подключить камеры' },
+        { fullTitle: 'Умные уведомления о событиях', fullText: 'Настраивайте уведомления под себя: движение, звук, расписание.\n\n• Мгновенные push-уведомления на телефон\n• Распознавание лиц и зоны интереса\n• Интеграция с умным домом', ctaLabel: 'Настроить уведомления' },
+        { fullTitle: 'Специальное предложение: −30% на год подписки', fullText: 'Оплатите год подписки и получите скидку 30%. Без скрытых платежей.\n\n• До 30 камер в одном аккаунте\n• Архив до 30 дней в облаке\n• Техподдержка 24/7', ctaLabel: 'Оформить подписку' }
       ];
 
       function openSheet(slideIndex, bg) {
         var data = bannerData[slideIndex] || bannerData[0];
         sheetBanner.style.background = bg;
-        sheetBanner.textContent = 'Баннер ' + (slideIndex + 1);
-        document.getElementById('sheetTitle').textContent = data.title;
-        document.getElementById('sheetText').textContent = data.text;
+        sheetBanner.textContent = '';
+        document.getElementById('sheetTitle').textContent = data.fullTitle;
+        document.getElementById('sheetText').textContent = data.fullText;
+        document.getElementById('sheetCta').textContent = data.ctaLabel;
         sheetOverlay.classList.add('open');
         sheetModal.classList.add('open');
         sheetOpen = true;
