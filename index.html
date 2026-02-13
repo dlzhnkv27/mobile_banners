@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#1EA3F8" />
+  <title>Ivideon Mobile Banners</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@8/css/framework7-bundle.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Канвас по центру — размеры iPhone 17 Pro (402 × 874 pt) */
+    :root {
+      --iphone-width: 402px;
+      --iphone-height: 874px;
+      --content-gutter: 16px; /* отступ превью камеры от края экрана */
+      --carousel-gap: 12px;   /* расстояние между баннерами */
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      cursor: none;
+    }
+
+    /* Имитация тач-жеста — круг вместо курсора */
+    .touch-cursor {
+      position: fixed;
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      pointer-events: none;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      transition: transform 0.05s ease-out, background 0.1s;
+    }
+    .touch-cursor.press {
+      transform: scale(0.85);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .phone-frame {
+      width: var(--iphone-width);
+      height: var(--iphone-height);
+      background: #000;
+      border-radius: 44px;
+      box-shadow: 0 0 0 3px #2c2c2e, 0 24px 48px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Динамический остров (опционально) */
+    .device-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 37px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    .phone-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f2f2f7;
+      border-radius: 40px;
+      margin: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* iOS статусбар */
+    .ios-statusbar {
+      flex-shrink: 0;
+      height: 54px;
+      min-height: 54px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 24px 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--blue-accent);
+    }
+    .ios-statusbar .time { flex: 1; }
+    .ios-statusbar .status-icons {
+      flex: 1;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 400;
+    }
+    .ios-statusbar .status-icons svg { width: 16px; height: 16px; fill: #fff; }
+
+    /* iOS навбар (стандартный, тайтл по центру) */
+    .app-navbar {
+      flex-shrink: 0;
+      height: 44px;
+      min-height: 44px;
+      background: var(--blue-accent);
+      border-bottom: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0 16px;
+    }
+    .app-navbar .title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* iOS таббар */
+    .app-tabbar {
+      flex-shrink: 0;
+      height: 83px;
+      min-height: 83px;
+      background: rgba(249, 249, 249, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 0.5px solid rgba(0,0,0,0.12);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 6px;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      color: #8e8e93;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .tab-item.active { color: #007aff; }
+    .tab-item svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    /* Pull-to-refresh */
+    .ptr-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+    .ptr-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 0;
+      overflow: hidden;
+      transition: height 0.2s;
+    }
+    .ptr-indicator .ptr-spinner {
+      width: 24px;
+      height: 24px;
+      border: 2.5px solid rgba(0,0,0,0.1);
+      border-top-color: var(--blue-accent);
+      border-radius: 50%;
+    }
+    .ptr-indicator .ptr-spinner.spin {
+      animation: ptr-spin 0.7s linear infinite;
+    }
+    @keyframes ptr-spin {
+      to { transform: rotate(360deg); }
+    }
+    .ptr-indicator .ptr-text {
+      font-size: 11px;
+      color: #8e8e93;
+      white-space: nowrap;
+    }
+
+    /* ===== БАННЕРЫ ===== */
+    .banners-section {
+      padding: 12px 0 8px;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .banners-track {
+      display: flex;
+      gap: 12px;
+      padding: 0 24px;
+    }
+    .banners-track.animate {
+      transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .banner-slide {
+      /* ширина = ширина экрана − 24px слева − 24px справа */
+      flex: 0 0 calc(var(--iphone-width) - 16px - 48px);
+      width: calc(var(--iphone-width) - 16px - 48px);
+      /* высота по пропорции 16:9 от ширины баннера */
+      height: calc((var(--iphone-width) - 16px - 48px) * 9 / 16);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 16px;
+      background: #ccc;
+    }
+    .banner-slide:nth-child(3n+1) { background: linear-gradient(135deg, #007aff, #5856d6); }
+    .banner-slide:nth-child(3n+2) { background: linear-gradient(135deg, #34c759, #30d158); }
+    .banner-slide:nth-child(3n+3) { background: linear-gradient(135deg, #ff9500, #ff9f0a); }
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .carousel-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.15);
+      transition: width 0.2s, background 0.2s;
+    }
+    .carousel-dot.active {
+      background: #007aff;
+      width: 18px;
+    }
+
+    /* Список камер */
+    .cameras-list {
+      padding: 12px var(--content-gutter) 24px;
+    }
+    .cameras-list .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8e8e93;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 8px 4px;
+    }
+    .camera-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .camera-preview {
+      flex-shrink: 0;
+      width: 80px;
+      height: 60px;
+      border-radius: 8px;
+      background: #2c2c2e;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8e8e93;
+      font-size: 11px;
+    }
+    .camera-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .camera-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .camera-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #000;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .camera-status {
+      font-size: 13px;
+      color: #34c759;
+    }
+    .camera-status.offline {
+      color: #ff3b30;
+    }
+    .camera-status.recording {
+      color: #007aff;
+    }
+    .camera-menu {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #8e8e93;
+      font-size: 20px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .camera-menu:active {
+      background: rgba(0,0,0,0.06);
+    }
+    .camera-menu .dots {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .camera-menu .dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    /* ===== Sheet Modal ===== */
+    .sheet-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-modal {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 90%;
+      max-height: 90%;
+      background: #fff;
+      border-radius: 14px 14px 0 0;
+      z-index: 101;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sheet-modal.open {
+      transform: translateY(0);
+    }
+    .sheet-modal.dragging {
+      transition: none;
+    }
+    .sheet-grabber {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      padding: 10px 0 6px;
+    }
+    .sheet-grabber::after {
+      content: '';
+      width: 36px;
+      height: 5px;
+      border-radius: 3px;
+      background: #d1d1d6;
+    }
+    .sheet-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 20px 12px;
+    }
+    .sheet-banner-img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    .sheet-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #000;
+      margin: 0 0 8px;
+    }
+    .sheet-text {
+      font-size: 15px;
+      color: #3c3c43;
+      line-height: 1.45;
+      margin: 0 0 16px;
+    }
+    .sheet-bullets {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+    }
+    .sheet-bullets li {
+      font-size: 15px;
+      color: #3c3c43;
+      line-height: 1.5;
+      padding: 6px 0 6px 24px;
+      position: relative;
+    }
+    .sheet-bullets li::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 13px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue-accent);
+    }
+    .sheet-footer {
+      flex-shrink: 0;
+      padding: 12px 20px 24px;
+      background: #fff;
+    }
+    .sheet-cta {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--blue-accent);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sheet-cta:active {
+      opacity: 0.85;
+    }
+
+    /* ===== Мобильный фулскрин ===== */
+    @media (max-width: 500px) {
+      body {
+        background: #f2f2f7;
+        cursor: auto;
+      }
+      .touch-cursor { display: none; }
+      .phone-frame {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+        background: #f2f2f7;
+      }
+      .phone-screen {
+        border-radius: 0;
+        margin: 0;
+      }
+      .device-island { display: none; }
+      .ios-statusbar {
+        padding-top: env(safe-area-inset-top, 0px);
+        height: calc(44px + env(safe-area-inset-top, 0px));
+      }
+      .app-tabbar {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        height: calc(50px + env(safe-area-inset-bottom, 0px));
+        min-height: auto;
+      }
+      .banner-slide {
+        flex: 0 0 calc(100vw - 48px);
+        width: calc(100vw - 48px);
+        height: calc((100vw - 48px) * 9 / 16);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="touch-cursor" id="touchCursor" aria-hidden="true"></div>
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="device-island"></div>
+
+      <!-- iOS Статусбар -->
+      <div class="ios-statusbar">
+        <span class="time">9:41</span>
+        <span class="status-icons">
+          <svg viewBox="0 0 16 16"><path d="M1 11h2v4H1zM5 8h2v7H5zM9 5h2v10H9zM13 1h2v14h-2z"/></svg>
+          <svg viewBox="0 0 16 16"><path d="M8 3C5.2 3 2.7 4.2 1 6.2l1.2 1.2C3.6 5.6 5.7 4.6 8 4.6s4.4 1 5.8 2.8L15 6.2C13.3 4.2 10.8 3 8 3zm0 4c-1.7 0-3.2.7-4.3 1.8l1.2 1.2c.8-.8 1.9-1.3 3.1-1.3s2.3.5 3.1 1.3l1.2-1.2C11.2 7.7 9.7 7 8 7zm0 4c-.8 0-1.6.3-2.1.9L8 14l2.1-2.1C9.6 11.3 8.8 11 8 11z"/></svg>
+          <svg viewBox="0 0 24 12"><rect x="0" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none" stroke-width="1"/><rect x="22" y="3.5" width="2" height="5" rx="1" fill="currentColor"/><rect x="1.5" y="2" width="18" height="8" rx="1.5" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <!-- iOS Навбар -->
+      <nav class="app-navbar">
+        <span class="title">Камеры</span>
+      </nav>
+
+      <div class="ptr-wrapper" id="ptrWrapper">
+        <div class="ptr-indicator" id="ptrIndicator">
+          <div class="ptr-spinner" id="ptrSpinner"></div>
+          <span class="ptr-text" id="ptrText"></span>
+        </div>
+
+        <section class="banners-section" id="bannersSection">
+          <div class="banners-track" id="bannersTrack">
+            <div class="banner-slide">Баннер 1</div>
+            <div class="banner-slide">Баннер 2</div>
+            <div class="banner-slide">Баннер 3</div>
+          </div>
+          <div class="carousel-dots" id="carouselDots">
+            <span class="carousel-dot active"></span>
+            <span class="carousel-dot"></span>
+            <span class="carousel-dot"></span>
+          </div>
+        </section>
+
+        <div class="cameras-list">
+          <div class="section-title">Все камеры</div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Входная дверь</div>
+            <div class="camera-status">Онлайн</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Парковка</div>
+            <div class="camera-status recording">Запись</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Кухня</div>
+            <div class="camera-status offline">Офлайн</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Гостиная</div>
+            <div class="camera-status">Онлайн</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Офис</div>
+            <div class="camera-status">Онлайн</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Склад</div>
+            <div class="camera-status recording">Запись</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+
+        <div class="camera-item">
+          <div class="camera-preview">Превью</div>
+          <div class="camera-info">
+            <div class="camera-name">Детская</div>
+            <div class="camera-status offline">Офлайн</div>
+          </div>
+          <button type="button" class="camera-menu" aria-label="Меню">
+            <span class="dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+        </div>
+      </div>
+
+      <!-- iOS Таббар -->
+      <div class="app-tabbar">
+        <button class="tab-item active">
+          <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4V6.5l-4 4z"/></svg>
+          <span>Камеры</span>
+        </button>
+        <button class="tab-item">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          <span>Архив</span>
+        </button>
+        <button class="tab-item">
+          <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          <span>События</span>
+        </button>
+        <button class="tab-item">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+          <span>Ещё</span>
+        </button>
+      </div>
+
+      <!-- Sheet Modal -->
+      <div class="sheet-overlay" id="sheetOverlay"></div>
+      <div class="sheet-modal" id="sheetModal">
+        <div class="sheet-grabber" id="sheetGrabber"></div>
+        <div class="sheet-body">
+          <div class="sheet-banner-img" id="sheetBanner">Баннер</div>
+          <h2 class="sheet-title" id="sheetTitle">Заголовок акции</h2>
+          <p class="sheet-text" id="sheetText">Узнайте подробности специального предложения и воспользуйтесь выгодными условиями уже сейчас.</p>
+          <ul class="sheet-bullets">
+            <li>Бесплатный пробный период 14 дней</li>
+            <li>Облачное хранилище видео без ограничений</li>
+            <li>Умные уведомления о движении 24/7</li>
+          </ul>
+        </div>
+        <div class="sheet-footer">
+          <button class="sheet-cta" id="sheetCta">Подробнее</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      /* ===== Карусель баннеров (зацикленная) ===== */
+      var section = document.getElementById('bannersSection');
+      var track   = document.getElementById('bannersTrack');
+      var dots    = document.querySelectorAll('#carouselDots .carousel-dot');
+      var GAP     = 12;
+      var INSET   = 24;
+
+      /* клонируем крайние слайды для бесконечного цикла */
+      var origSlides = Array.prototype.slice.call(track.children);
+      var count = origSlides.length;
+      var cloneLast  = origSlides[count - 1].cloneNode(true);
+      var cloneFirst = origSlides[0].cloneNode(true);
+      track.insertBefore(cloneLast, origSlides[0]);   /* клон последнего → в начало */
+      track.appendChild(cloneFirst);                    /* клон первого  → в конец  */
+
+      /* Теперь в треке: [clone-last] [orig-0] [orig-1] [orig-2] [clone-first]
+         Реальные индексы в треке: 0=clone, 1..count=реальные, count+1=clone
+         pos — позиция в треке (1-based для реальных слайдов) */
+      var pos = 1; /* начинаем с первого реального */
+      var dragging = false;
+      var didSwipe = false;
+      var startX, lastX, baseOff;
+      var autoTimer;
+
+      function sw()   { return section.clientWidth - INSET * 2; }
+      function step()  { return sw() + GAP; }
+      function off(p)  { return -(p * step()); }
+      function real(p) { return p - 1; } /* реальный индекс 0..count-1 */
+
+      function updateDots() {
+        var r = real(pos);
+        dots.forEach(function(d, j) { d.classList.toggle('active', j === r); });
+      }
+
+      function goTo(p, animate) {
+        pos = p;
+        if (animate) track.classList.add('animate');
+        else track.classList.remove('animate');
+        track.style.transform = 'translateX(' + off(pos) + 'px)';
+        updateDots();
+      }
+
+      /* после анимации на клон — мгновенный прыжок на настоящий слайд */
+      track.addEventListener('transitionend', function() {
+        if (pos === 0) {                 /* ушли на клон последнего → прыг на реальный последний */
+          goTo(count, false);
+        } else if (pos === count + 1) {  /* ушли на клон первого → прыг на реальный первый */
+          goTo(1, false);
+        }
+      });
+
+      function autoStart() {
+        clearInterval(autoTimer);
+        autoTimer = setInterval(function() { goTo(pos + 1, true); }, 3500);
+      }
+
+      goTo(1, false);
+      autoStart();
+
+      /* --- pointer / touch --- */
+      function px(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+
+      function onDown(e) {
+        dragging = true;
+        didSwipe = false;
+        startX = lastX = px(e);
+        baseOff = off(pos);
+        track.classList.remove('animate');
+        clearInterval(autoTimer);
+        if (e.type === 'mousedown') e.preventDefault();
+      }
+      function onMov(e) {
+        if (!dragging) return;
+        lastX = px(e);
+        track.style.transform = 'translateX(' + (baseOff + lastX - startX) + 'px)';
+      }
+      function onUp() {
+        if (!dragging) return;
+        dragging = false;
+        var dx = lastX - startX;
+        if (Math.abs(dx) > 5) didSwipe = true;
+        var thr = step() * 0.2;
+        if (dx < -thr)      goTo(pos + 1, true);
+        else if (dx > thr)  goTo(pos - 1, true);
+        else                 goTo(pos, true);
+        autoStart();
+      }
+
+      section.addEventListener('mousedown',  onDown);
+      section.addEventListener('touchstart', onDown, { passive: true });
+      document.addEventListener('mousemove', onMov);
+      document.addEventListener('touchmove', onMov, { passive: true });
+      document.addEventListener('mouseup',   onUp);
+      document.addEventListener('touchend',  onUp);
+
+      dots.forEach(function(d, i) {
+        d.addEventListener('click', function() { goTo(i + 1, true); autoStart(); });
+      });
+
+      window.addEventListener('resize', function() { goTo(pos, false); });
+
+      /* Курсор-круг (имитация тач-жеста) */
+      var cursor = document.getElementById('touchCursor');
+      if (cursor) {
+        document.addEventListener('mousemove', function (e) {
+          cursor.style.left = e.clientX + 'px';
+          cursor.style.top = e.clientY + 'px';
+          cursor.style.visibility = 'visible';
+        });
+        document.addEventListener('mousedown', function () { cursor.classList.add('press'); });
+        document.addEventListener('mouseup', function () { cursor.classList.remove('press'); });
+        document.addEventListener('mouseleave', function () {
+          cursor.classList.remove('press');
+          cursor.style.visibility = 'hidden';
+        });
+        document.addEventListener('mouseenter', function () { cursor.style.visibility = 'visible'; });
+      }
+
+      /* ===== Pull-to-refresh ===== */
+      var ptrWrap = document.getElementById('ptrWrapper');
+      var ptrInd  = document.getElementById('ptrIndicator');
+      var ptrSpin = document.getElementById('ptrSpinner');
+      var ptrText = document.getElementById('ptrText');
+      var ptrStartY = 0, ptrPulling = false, ptrRefreshing = false;
+      var PTR_MAX = 60;
+      var lastRefreshDate = new Date();
+
+      function fmtDate(d) {
+        var dd = String(d.getDate()).padStart(2, '0');
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var yy = d.getFullYear();
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mi = String(d.getMinutes()).padStart(2, '0');
+        return dd + '.' + mm + '.' + yy + ' ' + hh + ':' + mi;
+      }
+
+      function showPtrText() {
+        ptrText.textContent = 'Последнее обновление ' + fmtDate(lastRefreshDate);
+      }
+
+      showPtrText();
+
+      function ptrDown(e) {
+        if (ptrRefreshing) return;
+        if (ptrWrap.scrollTop > 0) return;
+        ptrPulling = true;
+        ptrStartY = e.touches ? e.touches[0].clientY : e.clientY;
+      }
+      function ptrMove(e) {
+        if (!ptrPulling || ptrRefreshing) return;
+        var y = e.touches ? e.touches[0].clientY : e.clientY;
+        var dy = Math.max(0, (y - ptrStartY) * 0.5);
+        if (dy === 0) return;
+        ptrInd.style.height = Math.min(dy, PTR_MAX) + 'px';
+      }
+      function ptrUp() {
+        if (!ptrPulling || ptrRefreshing) return;
+        ptrPulling = false;
+        var h = parseInt(ptrInd.style.height) || 0;
+        if (h >= PTR_MAX) {
+          ptrRefreshing = true;
+          ptrInd.style.height = '56px';
+          ptrSpin.classList.add('spin');
+          setTimeout(function() {
+            lastRefreshDate = new Date();
+            showPtrText();
+            ptrSpin.classList.remove('spin');
+            ptrInd.style.height = '0';
+            ptrRefreshing = false;
+          }, 1500);
+        } else {
+          ptrInd.style.height = '0';
+        }
+      }
+      ptrWrap.addEventListener('touchstart', ptrDown, { passive: true });
+      ptrWrap.addEventListener('mousedown', ptrDown);
+      ptrWrap.addEventListener('touchmove', ptrMove, { passive: true });
+      ptrWrap.addEventListener('mousemove', ptrMove);
+      document.addEventListener('touchend', ptrUp);
+      document.addEventListener('mouseup', ptrUp);
+
+      /* ===== Sheet Modal ===== */
+      var sheetOverlay = document.getElementById('sheetOverlay');
+      var sheetModal   = document.getElementById('sheetModal');
+      var sheetBanner  = document.getElementById('sheetBanner');
+      var sheetGrabber = document.getElementById('sheetGrabber');
+      var sheetOpen    = false;
+
+      var bannerData = [
+        { title: 'Облачное видеонаблюдение', text: 'Подключите камеры к облаку и смотрите видео из любой точки мира в реальном времени.' },
+        { title: 'Умные уведомления', text: 'Получайте мгновенные уведомления при обнаружении движения или звука.' },
+        { title: 'Скидка 30% на годовой план', text: 'Оформите подписку на год и сэкономьте — предложение ограничено.' }
+      ];
+
+      function openSheet(slideIndex, bg) {
+        var data = bannerData[slideIndex] || bannerData[0];
+        sheetBanner.style.background = bg;
+        sheetBanner.textContent = 'Баннер ' + (slideIndex + 1);
+        document.getElementById('sheetTitle').textContent = data.title;
+        document.getElementById('sheetText').textContent = data.text;
+        sheetOverlay.classList.add('open');
+        sheetModal.classList.add('open');
+        sheetOpen = true;
+      }
+
+      function closeSheet() {
+        sheetOverlay.classList.remove('open');
+        sheetModal.classList.remove('open');
+        sheetModal.style.transform = '';
+        sheetOpen = false;
+      }
+
+      /* клик по баннеру */
+      section.addEventListener('click', function(e) {
+        if (didSwipe) { didSwipe = false; return; }
+        var slide = e.target.closest('.banner-slide');
+        if (!slide) return;
+        var allSlides = track.querySelectorAll('.banner-slide');
+        var idx = Array.prototype.indexOf.call(allSlides, slide);
+        /* пропустить клоны: 0 = клон последнего, count+1 = клон первого */
+        var realIdx = idx - 1; /* т.к. клон добавлен в начало */
+        if (realIdx < 0) realIdx = count - 1;
+        if (realIdx >= count) realIdx = 0;
+        var bg = getComputedStyle(slide).background;
+        openSheet(realIdx, bg);
+      });
+
+      sheetOverlay.addEventListener('click', closeSheet);
+
+      /* свайп вниз по шиту */
+      var sheetStartY = 0, sheetLastY = 0, sheetDrag = false;
+      function sheetDown(e) {
+        sheetDrag = true;
+        sheetStartY = sheetLastY = e.touches ? e.touches[0].clientY : e.clientY;
+        sheetModal.classList.add('dragging');
+        if (e.type === 'mousedown') e.preventDefault();
+      }
+      function sheetMove(e) {
+        if (!sheetDrag) return;
+        sheetLastY = e.touches ? e.touches[0].clientY : e.clientY;
+        var dy = Math.max(0, sheetLastY - sheetStartY);
+        sheetModal.style.transform = 'translateY(' + dy + 'px)';
+      }
+      function sheetUp() {
+        if (!sheetDrag) return;
+        sheetDrag = false;
+        sheetModal.classList.remove('dragging');
+        var dy = sheetLastY - sheetStartY;
+        if (dy > 80) {
+          closeSheet();
+        } else {
+          sheetModal.style.transform = '';
+        }
+      }
+      sheetModal.addEventListener('mousedown', sheetDown);
+      sheetModal.addEventListener('touchstart', sheetDown, { passive: true });
+      document.addEventListener('mousemove', sheetMove);
+      document.addEventListener('touchmove', sheetMove, { passive: true });
+      document.addEventListener('mouseup', sheetUp);
+      document.addEventListener('touchend', sheetUp);
+
+      /* Кнопки камер — обычный курсор */
+      document.querySelectorAll('.camera-menu').forEach(function (btn) {
+        btn.style.cursor = 'pointer';
+        btn.addEventListener('click', function () {
+          var item = this.closest('.camera-item');
+          var name = item && item.querySelector('.camera-name').textContent;
+          alert('Контекстное меню: ' + name);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
