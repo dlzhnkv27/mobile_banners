@@ -236,15 +236,15 @@
     .banners-track {
       display: flex;
       gap: 12px;
-      padding: 0 24px;
+      padding: 0 16px;
     }
     .banners-track.animate {
       transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
     .banner-slide {
-      flex: 0 0 calc(var(--iphone-width) - 16px - 48px);
-      width: calc(var(--iphone-width) - 16px - 48px);
-      height: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
+      flex: 0 0 calc(var(--iphone-width) - 16px - 32px);
+      width: calc(var(--iphone-width) - 16px - 32px);
+      height: calc((var(--iphone-width) - 16px - 32px) * 6 / 16);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -262,8 +262,8 @@
     }
     .banner-slide .banner-img {
       flex-shrink: 0;
-      width: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
-      height: calc((var(--iphone-width) - 16px - 48px) * 6 / 16);
+      width: calc((var(--iphone-width) - 16px - 32px) * 6 / 16);
+      height: calc((var(--iphone-width) - 16px - 32px) * 6 / 16);
       border-radius: 0;
       background: transparent;
       overflow: hidden;
@@ -561,13 +561,13 @@
         min-height: auto;
       }
       .banner-slide {
-        flex: 0 0 calc(100vw - 48px);
-        width: calc(100vw - 48px);
-        height: calc((100vw - 48px) * 6 / 16);
+        flex: 0 0 calc(100vw - 32px);
+        width: calc(100vw - 32px);
+        height: calc((100vw - 32px) * 6 / 16);
       }
       .banner-slide .banner-img {
-        width: calc((100vw - 48px) * 6 / 16);
-        height: calc((100vw - 48px) * 6 / 16);
+        width: calc((100vw - 32px) * 6 / 16);
+        height: calc((100vw - 32px) * 6 / 16);
       }
     }
   </style>
@@ -770,7 +770,7 @@
       var track   = document.getElementById('bannersTrack');
       var dots    = document.querySelectorAll('#carouselDots .carousel-dot');
       var GAP     = 12;
-      var INSET   = 24;
+      var INSET   = 16;
 
       /* клонируем крайние слайды для бесконечного цикла */
       var origSlides = Array.prototype.slice.call(track.children);
