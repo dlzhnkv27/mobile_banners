@@ -808,7 +808,8 @@
       var pos = 1; /* начинаем с первого реального */
       var dragging = false;
       var didSwipe = false;
-      var startX, lastX, baseOff;
+      var startX, startY, lastX, baseOff;
+      var dragAxis = null;
       var autoTimer;
       var freezeTimer;
 
@@ -855,11 +856,14 @@
 
       /* --- pointer / touch --- */
       function px(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
+      function py(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
 
       function onDown(e) {
         dragging = true;
         didSwipe = false;
+        dragAxis = null;
         startX = lastX = px(e);
+        startY = py(e);
         baseOff = off(pos);
         track.classList.remove('animate');
         clearInterval(autoTimer);
@@ -867,12 +871,22 @@
       }
       function onMov(e) {
         if (!dragging) return;
+        var dx = px(e) - startX;
+        var dy = py(e) - startY;
+
+        if (!dragAxis && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+          dragAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+        }
+        if (dragAxis === 'y') return;
+        if (dragAxis === 'x' && e.cancelable) e.preventDefault();
+
         lastX = px(e);
         track.style.transform = 'translateX(' + (baseOff + lastX - startX) + 'px)';
       }
       function onUp() {
         if (!dragging) return;
         dragging = false;
+        dragAxis = null;
         var dx = lastX - startX;
         if (Math.abs(dx) > 5) didSwipe = true;
         var thr = step() * 0.2;
@@ -885,7 +899,7 @@
       section.addEventListener('mousedown',  onDown);
       section.addEventListener('touchstart', onDown, { passive: true });
       document.addEventListener('mousemove', onMov);
-      document.addEventListener('touchmove', onMov, { passive: true });
+      document.addEventListener('touchmove', onMov, { passive: false });
       document.addEventListener('mouseup',   onUp);
       document.addEventListener('touchend',  onUp);
 
@@ -939,6 +953,7 @@
       function ptrDown(e) {
         if (ptrRefreshing) return;
         if (ptrWrap.scrollTop > 0) return;
+        if (e.target && e.target.closest && e.target.closest('#bannersSection')) return;
         ptrPulling = true;
         ptrStartY = e.touches ? e.touches[0].clientY : e.clientY;
       }
