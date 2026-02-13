@@ -697,6 +697,7 @@
       var didSwipe = false;
       var startX, lastX, baseOff;
       var autoTimer;
+      var freezeTimer;
 
       function sw()   { return section.clientWidth - INSET * 2; }
       function step()  { return sw() + GAP; }
@@ -730,6 +731,12 @@
         autoTimer = setInterval(function() { goTo(pos + 1, true); }, 3500);
       }
 
+      function freezeThenResume() {
+        clearInterval(autoTimer);
+        clearTimeout(freezeTimer);
+        freezeTimer = setTimeout(function() { autoStart(); }, 1000);
+      }
+
       goTo(1, false);
       autoStart();
 
@@ -759,7 +766,7 @@
         if (dx < -thr)      goTo(pos + 1, true);
         else if (dx > thr)  goTo(pos - 1, true);
         else                 goTo(pos, true);
-        autoStart();
+        freezeThenResume();
       }
 
       section.addEventListener('mousedown',  onDown);
@@ -770,7 +777,7 @@
       document.addEventListener('touchend',  onUp);
 
       dots.forEach(function(d, i) {
-        d.addEventListener('click', function() { goTo(i + 1, true); autoStart(); });
+        d.addEventListener('click', function() { goTo(i + 1, true); freezeThenResume(); });
       });
 
       window.addEventListener('resize', function() { goTo(pos, false); });
